@@ -1,0 +1,7 @@
+# Normalize to LF in the repository and in working trees, so install.sh and the
+# extension sources never pick up CRLF from a Windows checkout. Without this, a
+# clone on Windows turns install.sh into a script the shell cannot parse.
+* text=auto eol=lf
+
+# Native Windows script: CRLF is what PowerShell itself writes.
+*.ps1 text eol=crlf

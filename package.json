@@ -1,0 +1,20 @@
+{
+  "name": "sensei",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Stability-first, self-maintained coding agent: pinned pi host + owned extensions/config",
+  "type": "module",
+  "bin": {
+    "sensei": "bin/sensei.mjs"
+  },
+  "scripts": {
+    "smoke": "node bin/sensei.mjs --version"
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "0.87.1",
+    "@ast-grep/cli": "0.45.3"
+  },
+  "engines": {
+    "node": ">=22.19"
+  }
+}

@@ -1,0 +1,11 @@
+node_modules/
+*.log
+
+# Local provider keys / endpoint overrides — never commit these.
+.env
+.env.*
+
+# OS and editor junk.
+.DS_Store
+Thumbs.db
+*.swp
