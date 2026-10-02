@@ -214,15 +214,51 @@ export default function (pi: any) {
     );
   }
 
-  function reportIfUnreported(t: BgTask): void {
-    if (t.reported || t.status === "running" || t.status === "orphaned") return;
-    t.reported = true;
-    persist(t);
+  // Handing a completion to the session has two safe moments. When no agent run is
+  // live, sendMessage() appends it to the session immediately (durable). During a run
+  // the host only queues it in memory, and it flushes queued custom messages right
+  // after the turn_end / agent_before_settle handlers return (agent-session.js), so a
+  // boundary hook is the durable place to hand it over. `reported` is set only once a
+  // delivery has been handed over, so an interrupted one is retried at the next
+  // boundary or session_start instead of being silently dropped.
+  let agentRunActive = false;
+
+  function deliverCompletion(t: BgTask): void {
+    // `triggerTurn: false` appends a visible custom message without spending a turn.
+    // Do NOT use `deliverAs: "nextTurn"` here: the host checks it first and returns
+    // early, which freezes the result until the user's next prompt and silently
+    // ignores triggerTurn.
     pi.sendMessage(
       { customType: "sensei-task-result", content: completionMessage(t), display: true },
-      { triggerTurn: true, deliverAs: "nextTurn" },
+      { triggerTurn: false },
     );
+    t.reported = true;
+    persist(t);
   }
+
+  // Hand over every finished-but-undelivered completion. Called at the boundaries the
+  // host flushes after, and when the session goes idle.
+  function flushCompletions(): void {
+    for (const t of tasks.values()) {
+      if (t.reported || t.status === "running" || t.status === "orphaned") continue;
+      deliverCompletion(t);
+    }
+  }
+
+  function reportIfUnreported(t: BgTask): void {
+    if (t.reported || t.status === "running" || t.status === "orphaned") return;
+    if (agentRunActive) return; // mid-run: the next boundary hook flushes it
+    deliverCompletion(t);
+  }
+
+  pi.on("agent_start", () => {
+    agentRunActive = true;
+  });
+  pi.on("turn_end", () => flushCompletions());
+  pi.on("agent_settled", () => {
+    agentRunActive = false;
+    flushCompletions();
+  });
 
   // Finalize a task whose subprocess is gone, using its persisted output file.
   function finalizeFromOutput(t: BgTask): void {
@@ -295,6 +331,7 @@ export default function (pi: any) {
 
   // Reap orphans left by a previous session once the agent is up.
   pi.on("session_start", () => {
+    agentRunActive = false;
     for (const t of tasks.values()) {
       if (t.status !== "running") {
         reportIfUnreported(t); // finished but never delivered (e.g. parent died mid-flight)
