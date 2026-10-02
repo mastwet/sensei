@@ -456,7 +456,11 @@ export default function (pi: any): void {
     escalation.observeNotice(detection);
     pi.sendMessage(
       { customType: NOTICE_TYPE, content: buildReminder(detection), display: true, details: detection },
-      { triggerTurn: false, deliverAs: "steer" },
+      // No triggerTurn: that flag gates the host's steer path (`isStreaming &&
+      // triggerTurn !== false`), so `triggerTurn: false` would silently downgrade
+      // this steer into an end-of-turn append. Omitting it steers mid-loop while
+      // streaming and appends without starting a turn when idle.
+      { deliverAs: "steer" },
     );
   });
 
@@ -481,7 +485,8 @@ export default function (pi: any): void {
               display: true,
               details: { toolName: decision.toolName, blockedCallCount: decision.blockedCallCount },
             },
-            { triggerTurn: false, deliverAs: "steer" },
+            // No triggerTurn — see the tool_execution_start notice above.
+            { deliverAs: "steer" },
           );
           if (ctx.hasUI) ctx.ui.notify(warning, "warning");
           pendingRecoveryToolName = decision.toolName;
