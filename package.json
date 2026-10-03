@@ -1,12 +1,37 @@
 {
-  "name": "sensei",
+  "name": "agent-sensei",
   "version": "0.1.0",
-  "private": true,
   "description": "Stability-first, self-maintained coding agent: pinned pi host + owned extensions/config",
+  "license": "MIT",
+  "author": "mastwet <1136523089@qq.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mastwet/sensei.git"
+  },
+  "homepage": "https://github.com/mastwet/sensei#readme",
+  "bugs": {
+    "url": "https://github.com/mastwet/sensei/issues"
+  },
   "type": "module",
   "bin": {
     "sensei": "bin/sensei.mjs"
   },
+  "files": [
+    "bin/",
+    "agent-template/",
+    "install.sh",
+    "start.ps1",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "coding-agent",
+    "agent",
+    "ai",
+    "llm",
+    "cli",
+    "tui"
+  ],
   "scripts": {
     "smoke": "node bin/sensei.mjs --version"
   },

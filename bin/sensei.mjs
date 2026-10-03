@@ -3,9 +3,42 @@
 // agent dir (settings/extensions/skills), so it never touches ~/.pi or ~/.senpi.
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { homedir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+
+const require = createRequire(import.meta.url);
+
+// Resolve an installed package's root directory by name, independent of where
+// npm put it. A local checkout nests deps under sensei/node_modules, but a
+// global `npm i -g` hoists them to an ancestor node_modules and sensei's own
+// node_modules may not exist at all — so never join(root, "node_modules", ...).
+function packageRoot(name) {
+  let dir = null;
+  try {
+    // ESM resolution first: packages with an "exports" map (the pi host has one)
+    // are invisible to require() and throw ERR_PACKAGE_PATH_NOT_EXPORTED.
+    dir = dirname(fileURLToPath(import.meta.resolve(name)));
+  } catch {
+    // No ESM entry point — pure-binary wrapper packages like @ast-grep/cli.
+    // Their manifest is still resolvable, so fall through to the try below.
+  }
+  if (dir) {
+    for (;;) {
+      if (basename(dir) === "node_modules") return null;
+      if (existsSync(join(dir, "package.json"))) return dir;
+      const up = dirname(dir);
+      if (up === dir) return null;
+      dir = up;
+    }
+  }
+  try {
+    return dirname(require.resolve(`${name}/package.json`));
+  } catch {
+    return null;
+  }
+}
 
 // Versions for the startup banner. Read here, in the wrapper, because extensions
 // stay import-free (see README) and cannot reach either package.json themselves.
@@ -16,6 +49,29 @@ function readVersion(manifest) {
   } catch {
     return "unknown";
   }
+}
+
+// The @ast-grep/cli postinstall hard-links the platform binary into its own
+// package. The dev bootstrap installs with --ignore-scripts (supply chain), so
+// look in the platform-specific optional dependency too.
+const AST_GREP_PLATFORM_PKG = {
+  "darwin-arm64": "@ast-grep/cli-darwin-arm64",
+  "darwin-x64": "@ast-grep/cli-darwin-x64",
+  "win32-arm64": "@ast-grep/cli-win32-arm64-msvc",
+  "win32-ia32": "@ast-grep/cli-win32-ia32-msvc",
+  "win32-x64": "@ast-grep/cli-win32-x64-msvc",
+  "linux-arm64": "@ast-grep/cli-linux-arm64-gnu",
+  "linux-x64": "@ast-grep/cli-linux-x64-gnu",
+}[`${process.platform}-${process.arch}`];
+
+function findSgBinary() {
+  const bin = process.platform === "win32" ? "sg.exe" : "sg";
+  for (const name of ["@ast-grep/cli", AST_GREP_PLATFORM_PKG]) {
+    if (!name) continue;
+    const dir = packageRoot(name);
+    if (dir && existsSync(join(dir, bin))) return join(dir, bin);
+  }
+  return null;
 }
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -42,16 +98,18 @@ if (!existsSync(agentDir)) {
   }
 }
 
-const hostPkg = join(root, "node_modules", "@earendil-works", "pi-coding-agent");
-const pi = join(hostPkg, "dist", "bundle", "cli.js");
-if (!existsSync(pi)) {
-  console.error("sensei: pi host not installed. Run `npm install --ignore-scripts` in the sensei repo.");
+const hostRoot = packageRoot("@earendil-works/pi-coding-agent");
+const pi = hostRoot && join(hostRoot, "dist", "bundle", "cli.js");
+if (!pi || !existsSync(pi)) {
+  console.error(
+    "sensei: pi host not installed. Reinstall sensei, or run `npm install` in the sensei repo.",
+  );
   process.exit(1);
 }
 
 // Point extensions at the vendored ast-grep binary when it's installed.
-const sgBin = join(root, "node_modules", "@ast-grep", "cli", process.platform === "win32" ? "sg.exe" : "sg");
-const sgEnv = !process.env.SENSEI_SG_PATH && existsSync(sgBin) ? { SENSEI_SG_PATH: sgBin } : {};
+const sg = process.env.SENSEI_SG_PATH || findSgBinary();
+const sgEnv = sg && existsSync(sg) ? { SENSEI_SG_PATH: sg } : {};
 
 const res = spawnSync(process.execPath, [pi, ...process.argv.slice(2)], {
   stdio: "inherit",
@@ -62,7 +120,7 @@ const res = spawnSync(process.execPath, [pi, ...process.argv.slice(2)], {
     SENSEI_REPO_ROOT: root,
     SENSEI_PI_BIN: pi,
     SENSEI_VERSION: readVersion(join(root, "package.json")),
-    SENSEI_HOST_VERSION: readVersion(join(hostPkg, "package.json")),
+    SENSEI_HOST_VERSION: readVersion(join(hostRoot, "package.json")),
     ...sgEnv,
   },
 });

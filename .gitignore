@@ -1,6 +1,9 @@
 node_modules/
 *.log
 
+# npm pack output.
+*.tgz
+
 # Local provider keys / endpoint overrides — never commit these.
 .env
 .env.*
