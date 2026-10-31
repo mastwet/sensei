@@ -1,175 +1,115 @@
 ---
 name: deepwork
-description: High-cost main-agent workflow for large, high-risk, multi-phase coding efforts with meaningful dependencies and review gates. Do not activate for routine multi-file changes.
+description: Use when an explicitly requested Deepwork session or a large, risky Pi-based coding effort needs several dependent delivery passes and coordinated verification. Skip routine bounded changes.
 ---
 
-# Deepwork
+# Deepwork for Sensei
 
-Deepwork is a main-agent workflow for heavy coding sessions: multiple
-dependent phases, cross-cutting architectural change, unsafe-to-partially-ship
-migration, or sustained coordination across specialist lanes. Never infer it
-merely because a task touches multiple files; skip it for trivial edits, quick
-docs changes, simple bug fixes, or routine bounded features.
+Use this optional workflow through Pi's `/skill:deepwork <task>` command.
+Keep the main agent responsible for planning, integration and acceptance.
+Implement small steps directly; delegate independent, well-bounded work when
+doing so reduces total effort. A skill supplies instructions, not a scheduler,
+file watcher or durable task engine.
 
-## Core Contract
+## Deliver the whole flow in passes
 
-When deepwork is active, the main agent must manage the work as a scheduler,
-not as the default implementation worker.
+1. **Sketch:** make every required user flow work end to end at a useful minimum.
+2. **Structure:** establish real data, module boundaries and principal failure paths.
+3. **Detail:** harden observed risks and polish to the requested quality.
 
-## Setup and Deepwork State
+Choose the number of passes from the task. Each pass ends with a usable
+delivery and a ranked known-issues list. Security and money/data correctness
+belong in the first usable delivery. Stop when acceptance is met; hand over
+remaining issues with their consequences.
 
-`.sensei/deepwork/` holds exactly two shapes: the pinned router head
-`.sensei/deepwork/<session-id>.md`, and one directory per task,
-`.sensei/deepwork/<task-slug>/`, for that task's progress file and topic
-files. Route content to one address: status, open items, one-line verdicts
-→ the progress file; full analyses and verdicts → a topic file;
-deliverables (code, specs, data, docs) → real project paths; scratch
-intermediates → nowhere. `.sensei/deepwork/.runtime/` is machine-written
-guard bookkeeping (receipts, claim markers) — never read by the workflow;
-guards record in shadow mode by default.
+Record the pass goal, ownership, dependencies, failure behavior and evidence
+in the project's existing plan. Use its existing decision documents for
+durable decisions. Add a new project document only when no suitable home exists.
 
-### Pinned Router Head
+## Use Pi and Sensei roles
 
-The activation prompt pins `.sensei/deepwork/<session-id>.md`, updated in
-place; re-running `/deepwork` reuses it. Never modify
-another session's file; only the main agent writes it. At most 12 lines:
-`status: active` (flip to `status: completed` when the session's work
-concludes), then `task:`, `slug:` (its task directory), `phase:`, `next:`,
-`blockers:` — one line each. A session without a task keeps only the
-`status:` line. The head is a hint: on conflict, the task progress file
-wins.
+Use `delegate(task, role, background?, cwd?, model?, timeoutSeconds?)`.
+Choose `background` only for work that can proceed independently. The caller
+must supply relevant paths, context, constraints, output and acceptance checks.
+State which files each writer owns before parallel dispatch.
 
-Before creating any deepwork file, ensure `.gitignore` contains
-`.sensei/deepwork/` and `.ignore` contains `!.sensei/deepwork/` plus
-`!.sensei/deepwork/**`, adding only missing entries.
+| Role | Responsibility | Capability boundary |
+|---|---|---|
+| `explorer` | Codebase and external documentation research | Read/retrieval tools; returns findings to the parent |
+| `oracle` | Architecture and code review | Read/retrieval tools; returns findings to the parent |
+| `fixer` | Bounded implementation, wiring and assigned checks | Pi file/shell tools; no Sensei delegation controls |
+| `designer` | UI design, implementation and visual review | Pi file/shell/retrieval tools; no Sensei delegation controls |
+| `observer` | Visual inspection | Media/read tools |
 
-### Task Progress File
+`librarian` remains a compatibility alias for `explorer`; use `explorer`
+for new research. Read-only roles cannot write research artifacts or run shell
+diagnostics. The parent records accepted findings in existing project docs.
+Pi's tool selection enforces available tools; prompt wording alone is not a
+shell sandbox.
 
-Each task keeps one progress file,
-`.sensei/deepwork/<task-slug>/progress.md` — at most 80 lines, rewritten in
-place, never appended to. Head: one-line fields — `status: active`, current
-phase, next step, frozen constraints (a constraint not written here is
-gone). Below: an open-items checklist (3–8 items) and a dated log folding
-every closed phase or decision into one line — `[x] name: one-line
-conclusion (see <file>)`. Update at every phase close, decision, and
-review, folding as you go; the head and log-line format are the only fixed
-shapes. Claim a task with `mkdir -p .sensei/deepwork` then a plain
-`mkdir .sensei/deepwork/<task-slug>` (no `-p` on the task directory); on
-success, write its `slug:` into the pinned head — flipping a
-reused head's `status:` back to `active` — before working. If the
-directory already exists: a `slug:` in another session's `status: active`
-head means claimed; otherwise adopt it by writing the `slug:` yourself.
-Full delegated output lands verbatim in
-`<task-slug>/<topic>.md` — written by the lane itself when it can write,
-transcribed by the main agent when it cannot; the progress file gets
-only a one-line conclusion plus the path. Never paste
-`council`/`oracle`/`librarian` delegate output into a progress file or fork
-one. The artifact's first line is the lane's one-line conclusion, the
-same line it returns; accept lane completion only after re-reading the
-artifact from disk and finding that first line (on miss, re-check once).
-Past ~400 lines, consolidate a topic file — one per topic, new versions
-overwrite old ones.
+Keep further delegation in the parent. Shell-capable workers remain trusted
+executors; omitting a tool does not prevent launching programs through shell.
 
-### Resuming
+Use task handles from actual results. Consume terminal results before acting
+on them; inspect reported exit, timeout and error evidence rather than treating
+text or a `done` label as proof of success. `task_send` attaches a completion
+note; it does not steer the running subprocess. `task_revive` starts fresh
+work from saved parameters; it does not resume the old child context.
 
-On resume or after compaction, read one chain, one file per hop: the
-pinned head → the progress file its `slug:` points to → the topic files
-its pointers reference. Nothing else. To find an existing task, read task
-status lines only (`grep -m1 '^status:' .sensei/deepwork/*/progress.md`)
-plus the pinned heads' `status:` and `slug:` lines; skip completed tasks,
-any task whose slug sits in another session's `status: active` head, and
-slug-less heads (legacy — never claimable, noted once); after picking
-one, do not read other task directories.
+## Keep a small resume index
 
-## Planning
+Obtain the current Pi session ID from the shell tool's injected environment:
 
-- before dispatch, draft a phased implementation/delegation plan: a small number
-  of coherent phases from the work's dependencies and natural delivery
-  boundaries; do not split work merely to reduce an Oracle review's scope;
-- make an a `delegate` call with the `oracle` role review mandatory after each phase; record the phase order,
-  specialist ownership, gate order, and one-line gate rationale in the deepwork
-  file; share a compact version with the user;
-
-## Phase Execution
-
-- before each implementation phase, decide the execution path: what can run in
-  parallel, what must be sequential, which specialists to delegate to, and
-  whether to split the same agent into multiple bounded lanes;
-
-### Scheduler Discipline
-
-Use the scheduler model throughout:
-
-- record task ids and ownership boundaries;
-- wait for background delegate completion (results are injected automatically) before consuming background results;
-- avoid blocking main-agent lane while background jobs run; if no independent
-  work remains, stop briefly and let the task-result injection resume the workflow;
-- do not advance to the next phase while relevant jobs are running or terminal
-  results are unreconciled.
-
-## Phase Gate and Commit
-
-- after each planned phase, run relevant validation, update the task progress file,
-  then request its planned an oracle-role gate before continuing;
-- before its planned Oracle gate, record in the task progress file the phase goal,
-  changed paths, validation evidence, the specific decision or risk to review,
-  and accepted research with file references, so Oracle reviews established
-  context rather than repeating discovery;
-- when the phase changes module boundaries, dependency direction, or file
-  placement, run an an `explorer`-role delegate structure scan in parallel with the Oracle gate;
-- reconcile review findings, perform one bounded remediation pass for material
-  issues, including simplify/readability feedback, and validate that pass with
-  focused evidence;
-- create a focused commit when the phase is an independently valid delivery
-  boundary before starting the next phase;
-
-### Oracle Re-Reviews
-
-Every planned Oracle gate has one initial review and may have at most two
-re-reviews. Request a re-review only when the remediation materially changes
-the reviewed decision or risk, or when the original concern cannot be verified
-with focused evidence. Do not spend a re-review on a mechanical or
-already-verified change.
-
-State the attempt in every Oracle prompt, for example:
-
-```text
-Gate 2 — review attempt 2 of 3 (1 re-review remaining)
+```sh
+node -e "console.log(process.env.PI_SESSION_ID || '')"
 ```
 
-For re-reviews, tell Oracle to prioritize unresolved material findings, risks
-introduced by remediation, and whether prior findings are resolved. It must not
-reopen accepted, unchanged, or resolved concerns. When the two re-reviews are
-exhausted, record any remaining material risk or blocker in the task progress file
-and ask the user whether to accept the risk, change scope, or authorize an
-exceptional additional review.
+Use the returned value, never a guessed ID. If it is unavailable, use the
+existing project progress document and report that no session head was created.
 
-## Designer Handoff Guardrail
+For a known session ID, keep only:
 
-When a deepwork phase includes a `designer`-role delegate, treat the delivered UI/UX as
-accepted design intent for later phases. Record any important design decisions in
-the task progress file before continuing.
+- `.sensei/deepwork/<session-id>.md`: `status:` and `slug:` pointing to this task.
+- `.sensei/deepwork/<task-slug>/progress.md`: about 40 lines, rewritten in place.
+  Include status, pass/goal, next step, constraints, decisions, running task
+  handles with ownership, References to project documents, and ranked issues.
 
-After designer work:
+Keep this local index ignored by git. Other durable artifacts remain at their
+existing project paths. Do not store duplicate plans, per-lane transcript
+copies or process diaries under the index.
 
-- preserve layout, rhythm, hierarchy, motion, spacing, color, affordances,
-  responsiveness, and component feel;
-- review and improve user-facing copy with grounded, normal wording, but do not
-  change visual structure or interaction intent;
-- route follow-up visual, responsive, motion, hierarchy, polish, or
-  component-feel changes back to a `designer`-role delegate;
-- use a `fixer`-role delegate only for bounded mechanical follow-up that preserves the design
-  exactly, such as wiring, tests, type fixes, or non-visual behavior changes;
-- if design intent must change, record why in the task progress file before changing
-  it.
+Only the parent writes its head and progress. Before adopting an existing
+task, check whether another active session head names its slug; choose a
+separate task when another writer owns it. This convention does not provide
+cross-process locking.
 
-## Completion
+On continuation after compaction or reopening, use the visible Pi session
+history (or read the JSONL path in `PI_SESSION_FILE` when needed; ephemeral
+sessions have no file), then this session's head, its progress and only the References
+needed for the next action. On a fork or new session, create its own head and
+respect existing ownership. If the pointer cannot be resolved unambiguously,
+report what is missing instead of claiming automatic restoration.
 
-When the work concludes, rewrite the task progress file in place into a
-tombstone of at most 15 lines: first line `status: completed`, then the
-final conclusion, pointers to key deliverables, surviving frozen
-constraints, and the date. Drop the log and checklist. Move nothing; add
-no index files or ledgers. A finished task directory is read by nothing
-and may be deleted at any time, without record.
+Pi owns sessions and compaction. This skill does not install an automatic
+pointer-injection hook, receipts/claims guard or separate persistence engine.
+Update the index at pass transitions, decisions and blockers.
 
-- finish with final validation and a concise summary.
+## Verify, review and finish
+
+Run checks appropriate to the pass and its real risks. Build success alone
+does not prove runtime, UI, persistence or external-service behavior.
+Integrate writers before final verification and reuse evidence while valid.
+
+At each meaningful pass boundary, request one scoped `oracle` review when
+the changed risk warrants it. Include the goal, changed paths, established
+decisions and actual evidence. Repair material findings in one bounded pass;
+allow at most two justified re-reviews focused on changed or unresolved risks.
+Keep design changes with `designer` and mechanical follow-up with `fixer`.
+
+Commit an independently valid pass. If effort keeps growing, step back,
+reassess the direction and revise the next pass rather than extending a patch
+chain. Honor user-requested checkpoints; otherwise continue within authorization.
+
+When acceptance is met, rewrite progress to a short completion record with
+deliverable references, verification, known issues and date; mark its head
+completed. Report implemented, verified and unverified outcomes separately.

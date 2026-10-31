@@ -112,7 +112,7 @@ export default function council(pi: any): void {
       "Use for high-stakes decisions, architecture choices, or when a second opinion reduces risk.",
     promptSnippet: "council — multi-model parallel query + synthesized consensus report",
     promptGuidelines: [
-      "Council is for judgment calls, not information retrieval — delegate research to librarian/explorer roles instead.",
+      "Council is for judgment calls; use explorer for codebase and external documentation research.",
       "Pass relevant code or findings in `context`; councillors have no tools.",
       "Configure the seats with SENSEI_COUNCIL_MODELS or the `councillors` param.",
     ],

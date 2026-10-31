@@ -1,0 +1,12 @@
+# Sensei project rules
+
+1. **Pi only.** Build Sensei exclusively on the pinned official Pi runtime and supported Pi extension, SDK, CLI/RPC and package interfaces. Do not introduce any OpenCode runtime, SDK, adapter, configuration model, permission compiler or lifecycle machinery. External projects may inform requirements and test cases; translate accepted behavior into Pi interfaces.
+2. **Check native infrastructure first.** Before adding task, model, configuration, persistence or distribution machinery, inspect the pinned Pi source/docs and official examples. Record what already exists, what is only an example or separate package, and the smallest remaining gap in `docs/ARCHITECTURE.md`.
+3. **Keep the owned layer small.** Preserve the unpatched official host, exact dependency pin and lockfile. Reuse or delete before adding code, dependencies, configuration, services or abstractions. Any added mechanism must meet a confirmed need and justify its lifetime cost.
+4. **Adopt selectively.** Assess each upstream behavior independently. Keep fixes with the behavior they repair; distinguish released code from unreleased changes. Do not accept an upstream product decision merely to stay in sync.
+5. **Bound delegated work.** Define responsibility, input, output, failure and verification before dispatch. Parallelize only independent work with clear ownership. The parent integrates results and owns end-to-end acceptance; background execution is a task-specific choice.
+6. **Use Pi capability boundaries.** Restrict specialist tools with Pi's native tool selection. Read-only roles have no shell or mutating tools; prompt text is not a shell sandbox. Preserve the `librarian` compatibility alias while directing new research to `explorer`.
+7. **Keep one owner per state.** Let Pi own authentication, model/session state, provider routing, MCP and package loading. Preserve user configuration. Keep workflow state small, reference existing project documents and remove claims about mechanisms that are not implemented.
+8. **Verify the changed contract.** Run focused checks for low-impact edits and real-host integration checks for runtime, permissions, concurrency or persistence changes. Use meaningful failure-path tests. Report implemented, verified and unevaluated behavior separately; stop expanding validation once the changed risks are covered.
+
+Architecture, native capability assessments and current adoption decisions: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).

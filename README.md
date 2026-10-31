@@ -8,6 +8,8 @@ A stability-first, self-maintained coding agent. Built like `oh-my-opencode-slim
 
 Source, issues, and release notes: [github.com/mastwet/sensei](https://github.com/mastwet/sensei) · MIT licensed.
 
+Project policy: [AGENTS.md](AGENTS.md). Sensei builds exclusively on official Pi interfaces. Upstream ideas are assessed individually against its minimal, lightweight design.
+
 ## Install
 
 ```sh
@@ -68,7 +70,7 @@ The wrapper resolves both dependencies by package name rather than by path. A lo
 | Feature | What it does | Replaces |
 |---|---|---|
 | `delegate` tool | Runs a self-contained subtask in a fresh headless pi subprocess (own session, same toolset, depth-capped at 2, timeout, 30k output cap). `task`, `role`, `background`, `cwd`, `model`, `timeoutSeconds`. | omo subagents/team-mode core value |
-| `roles` | The six specialist role prompts behind `role`: explorer, librarian, oracle, designer, fixer, observer — each with its own tool limits and file-operation rules. | omo agent role prompts |
+| `roles` | Five specialist roles: explorer (code and external docs research), oracle, designer, fixer, observer. `librarian` remains an explorer alias. Pi tool allowlists omit shell/mutating tools for research/review roles and Sensei delegation/task-revival controls for workers. Existing `roles/librarian.md` overrides still apply when that alias is requested. | specialist role workflow |
 | `task_*` tools | Durable background tasks: `task_list` (spans earlier sessions), `task_status`, `task_cancel`, `task_revive` (respawn a dead task with its original parameters), `task_send` (attach a note delivered with the completion — pi subagents have no live input channel). Results wake the parent session at agent boundaries. | — (bg task lifecycle) |
 | `/work <goal>` | Arms a run-until-done loop: at each settle boundary injects a continue nudge until the agent emits `<sensei:done/>` (cap: 40 continuations). Respects user aborts/errors. `/work stop` disarms, bare `/work` shows status. | omo ultrawork |
 | `create_goal`/`update_goal`/`get_goal` + `/goal` | Durable session goal that keeps the agent working at each settle boundary via hidden continuation prompts with completion/blocked audits (cap 8, stall check after 3 toolless turns). Persisted in `~/.sensei/goals/`; `/work` yields while a goal is active. | senpi goal (pi-goal) |
@@ -121,7 +123,7 @@ Extensions have no third-party imports (raw JSON-Schema params), which reduces d
 |---|---|
 | `codemap` | Hierarchical `codemap.md` generation for unfamiliar repos, with `.sensei/codemap.json` change detection. Subagent fan-out goes through the `delegate` tool. |
 | `clonedeps` | Clone a dependency's source into an ignored local workspace so the agent can read library internals when docs aren't enough. |
-| `deepwork` | High-cost main-agent workflow for large, high-risk, multi-phase efforts with review gates. |
+| `deepwork` | Optional Pi skill for large, risky work: usable end-to-end passes, a small session-ID-based resume index, project-owned documents and scoped verification. Invoke `/skill:deepwork`; no separate scheduler or guard runtime. |
 | `verification-planning` | Plan a credible, project-specific evidence path before a non-trivial feature, fix, or refactor. |
 | `simplify` | Reduce complexity for clarity without changing behavior. |
 | `worktrees` | Manage git worktrees as isolated lanes for complex, risky, or parallel work. |
