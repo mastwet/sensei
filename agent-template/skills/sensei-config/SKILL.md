@@ -54,7 +54,7 @@ rules file.
 | System prompt | `APPEND_SYSTEM.md` (append) or `SYSTEM.md` (replace) | Global agent instructions |
 | Presets | `~/.sensei/presets/<name>.md` | `/preset <name>` applies a named prompt block |
 | Rules | `~/.sensei/rules/*.md`, `paths:` frontmatter for glob activation | Static or file-type-triggered instructions |
-| Role prompts | `~/.sensei/roles/<role>.md` full replace, `<role>_append.md` append | Per-role system prompt for `delegate(role)` — explorer, librarian, oracle, designer, fixer, observer |
+| Role prompts | `~/.sensei/roles/<role>.md` full replace, `<role>_append.md` append | Per-role system prompt for `delegate(role)` — explorer, oracle, designer, fixer, observer; librarian is an explorer alias with its existing alias-specific override files |
 | Env knobs | `SENSEI_COUNCIL_MODELS` (comma list `provider/model`), `SENSEI_WEBFETCH`, `SENSEI_BASH_DEFAULT/MAX_TIMEOUT_SECONDS`, `SENSEI_VISION_MODEL`, `SENSEI_SG_PATH`, `SENSEI_AGENT_DIR` | Feature configuration |
 
 Common customizations:
@@ -65,7 +65,8 @@ Common customizations:
   behavior additions; use `<role>.md` only to replace the bundled prompt
   entirely (must restate essential constraints).
 - **Gate tools**: pi `--tools`/`--exclude-tools` per launch, or role tool
-  allowlists inside `roles.ts` (repo edit).
+  allowlists inside `roles.ts` (repo edit). Explorer/oracle use retrieval-only
+  allowlists; a prompt override does not grant shell or file-writing tools.
 - **Add project rules**: `<repo>/AGENTS.md`, rules dir with `paths:` globs.
 
 ## Safe Improvement Rules

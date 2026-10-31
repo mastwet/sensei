@@ -1,5 +1,6 @@
 // Deterministic model for real-host integration tests; never calls a provider.
 import { appendFileSync } from "node:fs";
+import { getCurrentSystemPrompt, getCurrentTools } from "@earendil-works/pi-ai";
 
 export default function (pi: any) {
   let requests = 0;
@@ -27,7 +28,24 @@ export default function (pi: any) {
       requests++;
       const toolCall = (name: string, args: any) => ({ type: "toolCall", id: `call-${requests}`, name, arguments: args });
       let content: any[] = [{ type: "text", text: "host-ok" }];
-      if (scenario === "tools" && requests === 1) {
+      if (scenario?.startsWith("role-")) {
+        const child = Number(process.env.SENSEI_DELEGATE_DEPTH ?? "0") > 0;
+        if (!child && requests === 1) {
+          content = [toolCall("delegate", { task: "Inspect the project without modifying it", role: scenario.slice(5), model: "sensei-test/fixture" })];
+        } else if (child && requests === 1) {
+          content = scenario === "role-fixer" || scenario === "role-designer"
+            ? [toolCall("codemode", { code: 'text(await tools.write({path:"worker-can-write",content:"ok"})); text(await tools.delegate({task:"Forbidden nested work",role:"explorer",model:"sensei-test/fixture"}));' })]
+            : [toolCall("bash", { command: 'node -e "require(\'node:fs\').writeFileSync(\'readonly-violation\',\'bad\')"' })];
+        } else {
+          const result = context.messages.filter((m: any) => m.role === "toolResult").at(-1);
+          const text = child ? JSON.stringify({
+            tools: getCurrentTools(context.messages).map((t: any) => t.name),
+            legacyOverride: getCurrentSystemPrompt(context.messages).includes("LEGACY_ALIAS_OVERRIDE"),
+            denied: result?.isError === true,
+          }) : result?.content?.[0]?.text ?? "missing child result";
+          content = [{ type: "text", text }];
+        }
+      } else if (scenario === "tools" && requests === 1) {
         content = [toolCall("codemode", {
           code: 'text(await tools.todo({action:"add",text:"migration verified"})); text(await tools.read({path:"nested/sample.txt"})); text(await tools.bash({command:"node --version"}));',
         })];

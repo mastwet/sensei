@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -111,6 +111,45 @@ test("owned tools execute through native codemode with timeout and nested AGENTS
   assert.match(result, /NESTED_INSTRUCTION_SENTINEL/);
   assert.ok(events(out).filter((e) => e.type === "tool_execution_end").every((e) => !e.isError), out);
 });
+
+for (const role of ["explorer", "librarian", "oracle", "observer"]) {
+  test(`${role} delegates use Pi tool restrictions to reject shell writes`, (t) => {
+    const p = profile(t);
+    // The child loads its test provider through normal global Pi discovery.
+    cpSync(join(root, "tests/fixtures/provider.ts"), join(p.agent, "extensions/test-provider.ts"));
+    if (role === "librarian") {
+      mkdirSync(join(p.agent, "roles"));
+      writeFileSync(join(p.agent, "roles/librarian.md"), "LEGACY_ALIAS_OVERRIDE: inspect without modifying files.");
+    }
+    const args = sessionArgs.filter((arg) => arg !== "-e" && arg !== join(root, "tests/fixtures/provider.ts"));
+    const out = p.run([...args, "Inspect the project"], `role-${role}`);
+    assert.equal(existsSync(join(p.cwd, "readonly-violation")), false);
+    const child = JSON.parse(replies(out).at(-1));
+    assert.equal(child.denied, true);
+    if (role === "librarian") assert.equal(child.legacyOverride, true);
+    assert.ok(child.tools.includes("read"));
+    if (role !== "observer") assert.ok(child.tools.includes("web_search"));
+    for (const forbidden of ["bash", "powershell", "edit", "write", "ast_grep_replace", "delegate", "task_revive", "codemode"]) {
+      assert.ok(!child.tools.includes(forbidden), `${role} exposes ${forbidden}`);
+    }
+  });
+}
+
+for (const role of ["fixer", "designer"]) {
+  test(`${role} can write through Pi codemode but cannot delegate through it`, (t) => {
+    const p = profile(t);
+    cpSync(join(root, "tests/fixtures/provider.ts"), join(p.agent, "extensions/test-provider.ts"));
+    const args = sessionArgs.filter((arg) => arg !== "-e" && arg !== join(root, "tests/fixtures/provider.ts"));
+    const out = p.run([...args, "Implement a bounded change"], `role-${role}`);
+    assert.equal(readFileSync(join(p.cwd, "worker-can-write"), "utf8"), "ok");
+    const child = JSON.parse(replies(out).at(-1));
+    assert.equal(child.denied, true);
+    assert.ok(child.tools.includes("write"));
+    assert.equal(child.tools.includes("powershell"), process.platform === "win32");
+    assert.ok(!child.tools.includes("delegate"));
+    assert.ok(!child.tools.includes("task_revive"));
+  });
+}
 
 test("/work submits its goal and continues at settle until the done marker", async (t) => {
   const p = profile(t);

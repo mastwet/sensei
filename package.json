@@ -21,6 +21,7 @@
     "agent-template/",
     "install.sh",
     "start.ps1",
+    "AGENTS.md",
     "docs/ARCHITECTURE.md",
     "README.md",
     "LICENSE"

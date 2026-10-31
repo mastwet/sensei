@@ -352,14 +352,14 @@ export default function (pi: any) {
     label: "Delegate",
     description:
       "Delegate a self-contained task to a subagent: a fresh pi process with its own history. " +
-      "Pass `role` to use a specialist (explorer|librarian|oracle|designer|fixer|observer) with a tuned system prompt and tool limits. " +
+      "Pass `role` to use a specialist (explorer|oracle|designer|fixer|observer; librarian aliases explorer) with a tuned system prompt and Pi tool limits. " +
       "Pass `background=true` to run it async and get a task id back; results arrive automatically when done. " +
       "The task prompt must be fully self-contained — the subagent sees only what you write in it.",
     promptSnippet: "delegate — run a self-contained subtask in a fresh headless pi subprocess (optional specialist role, optional background)",
     promptGuidelines: [
       "Delegate independent, well-specified subtasks; keep coordination in the parent session.",
       "Write self-contained task prompts: relevant paths, constraints, and the exact deliverable expected back.",
-      "Prefer the specialist roles: explorer (codebase search), librarian (docs research), oracle (architecture/review advice), designer (UI/UX), fixer (implementation), observer (visual analysis).",
+      "Use explorer for codebase and external docs research, oracle for architecture/review, designer for UI/UX, fixer for implementation, and observer for visual analysis.",
       "Use background=true for independent work that can run in parallel; collect results with task_list/task_status.",
     ],
     parameters: {
@@ -369,7 +369,7 @@ export default function (pi: any) {
         role: {
           type: "string",
           enum: Object.keys(ROLES),
-          description: "Specialist role: explorer|librarian|oracle|designer|fixer|observer",
+          description: "Specialist role: explorer|oracle|designer|fixer|observer; librarian is a compatible explorer alias",
         },
         background: { type: "boolean", description: "Run asynchronously; returns a task id (default false)" },
         cwd: { type: "string", description: "Working directory for the subagent (default: current directory)" },
