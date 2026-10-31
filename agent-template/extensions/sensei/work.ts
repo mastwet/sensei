@@ -30,7 +30,7 @@ export default function (pi: any) {
       goal = a;
       continuations = 0;
       lastAssistantText = "";
-      await ctx.sendUserMessage(
+      pi.sendUserMessage(
         `Goal: ${a}\n\nWork on this goal until it is completely done — do not stop to ask for confirmation. ` +
           `When, and only when, the goal is fully achieved, end your final message with the marker ${DONE_MARKER} on its own line.`,
         { deliverAs: "followUp" },
@@ -48,12 +48,21 @@ export default function (pi: any) {
     }
   });
 
+  // A user abort skips agent_before_settle; do not revive the old goal when
+  // the user submits an unrelated prompt later in the same session.
+  pi.on("agent_settled", (event: any) => {
+    if (event.aborted) armed = false;
+  });
+
   pi.on("agent_before_settle", (event: any) => {
     if (!armed) return;
     // An active goal owns the continuation loop; work stays armed but yields.
     if ((globalThis as any).__senseiGoalActive) return;
     // Respect user aborts and errors: never continue past them.
-    if (event.outcome !== "completed" || !event.context?.canContinue || lastAssistantText.includes(DONE_MARKER)) {
+    // canContinue describes the context BEFORE our continuation entry is added.
+    // A final assistant message normally makes it false; the host validates the
+    // rebuilt context after applying the entries returned below.
+    if (event.outcome !== "completed" || lastAssistantText.includes(DONE_MARKER)) {
       armed = false;
       return;
     }

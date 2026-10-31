@@ -6,8 +6,8 @@
 // line 3 (wide terminals only) keeps the command hints that replacing the built-in
 // logo header would otherwise drop. `/banner` cycles sensei -> built-in.
 //
-// Dependency-free by design (see README): no imports from the host package, so a
-// host upgrade can never break this extension. That rules out pi-tui's
+// Dependency-free by design (see README): no host-package imports, but the UI
+// contract still needs verification on host upgrades. Avoiding pi-tui's
 // truncateToWidth(), so span fitting is hand-rolled below. Every string here is
 // ASCII except the fixed glyphs BAR ("▌") and SEP ("·"), both of which occupy
 // exactly one terminal column, so string length still matches display width.

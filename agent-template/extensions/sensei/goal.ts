@@ -184,7 +184,9 @@ export default function goal(pi: any): void {
 
 	pi.on("agent_before_settle", async (event: any, ctx: any) => {
 		if (!goal || goal.status !== "active") return undefined;
-		if (event.outcome !== "completed" || !event.context?.canContinue) return undefined;
+		// The hidden message below makes the context continuable; the host checks
+		// canContinue again after applying boundary entries.
+		if (event.outcome !== "completed") return undefined;
 		if (goal.continuations >= MAX_CONTINUATIONS) {
 			goal.status = "paused";
 			goal.updatedAt = Date.now();
@@ -326,7 +328,7 @@ export default function goal(pi: any): void {
 				goal.status = "active";
 				goal.continuations = 0;
 				goal.toollessTurns = 0;
-				ctx.sendUserMessage("Resume working on the active goal.", { deliverAs: "followUp" });
+				pi.sendUserMessage("Resume working on the active goal.", { deliverAs: "followUp" });
 			} else if (cmd === "clear") {
 				goal = null;
 			} else {
