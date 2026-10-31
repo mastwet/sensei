@@ -72,7 +72,8 @@ The smallest viable approach is to keep the official Pi CLI as the host, adapt a
 1. Record the Pi-only and minimal-design rules in the root `AGENTS.md`.
 2. Check the pinned Pi source and official examples for background work, models, presets and packages before choosing an integration.
 3. Adapt Deepwork as a Pi skill and consolidate specialist research into Explorer, retaining the Librarian alias and its existing prompt override paths.
-4. Verify native child-process tool restrictions and skill behavior, then publish the scoped change for review. Background-runtime replacement, independent Council agents, richer model presets and peripheral products remain assessments, not enabled features.
+4. Verify native child-process tool restrictions and skill behavior, then publish the scoped change for review. Background-runtime replacement, independent Council agents and richer team presets remain assessments, not enabled features.
+5. Apply the subsequent product decision below: ship Interview as a native Pi conversation skill; close the excluded peripheral products and document unverified infrastructure as pending research.
 
 Deepwork uses `/skill:deepwork`, Pi's injected `PI_SESSION_ID`, a small local resume index and references to existing project documents. It adds no hook, scheduler or guard. This is an explicit choice: the skill provides a manual recovery procedure, not guaranteed automatic pointer restoration after compaction. Its old references to receipts and shadow guards are removed.
 
@@ -105,18 +106,40 @@ Current `council` remains direct model calls with no tools. Independent code-rea
 | Team/role-to-model profiles | Delegate `--model` selection and official agent-definition examples; Pi session state for the selected model | No ready-made team-profile manager was established in the CLI. Add a small role-to-model mapping only when a concrete roster requirement is confirmed. No new profile/config schema is introduced here. |
 | Enabling optional resources | Native Pi packages and resource filters, extension registration/activation and `pi config` | Prefer package/resource selection over additional global switches. Individually selectable features need independent extension/package entries; the current aggregate Sensei entry does not make every internal module separately configurable. |
 
-### Peripheral products: separate Pi feasibility assessments
+### Product decisions
+
+The following user decisions supersede the initial feasibility assessment. Only Interview is selected for implementation among these products. A technically possible extension is not by itself a reason to ship a product.
 
 | Product | Pi-native integration path | Current decision |
 |---|---|---|
-| Agent/skill marketplace | Native Pi packages, npm/git/local sources, gallery discovery, install/list/remove/update/config and resource filters | Reuse package infrastructure. A curated catalog could be external data/UI; no separate transactional package store or foreign manifest format. |
-| Interview/specification workflow | A Pi skill or optional command using existing `ctx.ui` dialogs and project documents; RPC clients answer extension dialogs | Feasible without an embedded web server. Product flow and useful output still need to be selected; no interview subsystem is added. |
-| ACP-connected external agents | Optional Pi extension speaking ACP to a configured subprocess, returning results through a Pi tool | No native ACP client was established in the inspected coding-agent interfaces. Feasible as an independent adapter, with separate external-agent permissions, model selection, cancellation and protocol tests. No adapter or SDK dependency is added. |
-| Companion/desktop UI | Read Pi JSON/RPC events in a separate client; use Pi's existing sessions and control protocol | Feasible as an external product. Desktop packaging, OS integration and its permissions are outside the coding core. |
-| Terminal panes | Launch native Pi processes in a selected terminal/multiplexer and observe JSON/RPC | Feasible as an optional environment-specific integration. Do not import terminal viewers or wiring tied to another host; verify native Windows and WSL separately. |
-| Evaluation harness | Existing real-host offline tests plus Pi CLI/RPC/SDK for future task trials | Reuse Pi execution; deterministic scoring and optional model judging must stay distinct. Live trials require their own scoped, token-cost-aware validation. |
+| Agent/skill marketplace | Native Pi package installation already exists | **Not doing.** No Sensei marketplace, catalog, store or marketplace compatibility layer. Normal Pi package usage remains host-owned. |
+| Interview/specification workflow | Native skill discovery, `/skill:interview`, ordinary user/assistant turns, session JSONL and project file tools | **Implemented as a skill.** One decision per turn, explicit unknowns and a draft specification for confirmation. Saving uses an agreed project document; implementation needs a separate instruction. |
+| ACP-connected external agents | Would require an external-agent adapter | **Not doing.** No ACP bridge or SDK dependency. |
+| Companion/desktop UI | Would require a separate UI product | **Not doing.** No desktop client, installer or background service. |
+| Terminal panes | Would require environment-specific terminal integration | **Not doing.** No pane manager or multiplexer adapters. |
+| Separate evaluation product | Pi execution and existing repository tests remain available | **Not doing.** No upstream evaluation dashboard, model judge or separate evaluation service. Ordinary regression tests remain part of development. |
 
-These conclusions are source/API feasibility assessments. They are not live-provider, live-ACP, durable-restart or desktop prototypes. No optional runtime dependency, model change, autonomous scheduling policy or peripheral product is activated.
+Interview design: use a single prompt skill because the requested behavior is interactive requirements discovery within Pi. Native conversation and session history already supply turn-taking and persistence. The official `question.ts`/`questionnaire.ts` examples offer custom terminal UI, and `ctx.ui` offers dialogs, but neither is needed for this flow. A custom tool, dashboard or server would add an implementation and interaction surface without a confirmed need. The skill is instructional, so it does not enforce approval or automatically pause `/work`/goals; the user must pause active continuation before starting. Compaction/reopen recovery depends on surviving Pi history or a referenced specification, not a guaranteed recovery hook.
+
+Verification for the skill covers native discovery/command expansion, packaging, and a fresh-context behavioral check for one-decision turn-taking, skipped answers, confirmation, saving and continuation. It does not establish deterministic model compliance or a live-provider interview benchmark.
+
+### Remaining functionality: native coverage and pending research
+
+Apply the root native-infrastructure rule before any further port. Reuse confirmed native behavior; when a higher-level subsystem would still need to be built or the native coverage is uncertain, leave it unimplemented and record **pending research**. The table does not classify an available primitive as absent, and pending research is not an implementation commitment.
+
+| Remaining behavior | Confirmed Pi infrastructure | Current disposition / next research question |
+|---|---|---|
+| Background admission queues and provider/model concurrency budgets | Official subagent example has bounded in-process parallelism; current Sensei uses separate CLI children | **Pending research; not ported.** Establish whether that example covers shared background admission, ownership and cancellation before adding any queue. |
+| Live child messages, child questions and continuation of the original child context | SDK/RPC can steer, follow up, answer extension UI requests and resume session files | **Pending research; not ported.** Current `--no-session` print children have no input channel or saved child conversation. Do not claim `task_send`/`task_revive` provide these behaviors or replace the task runtime now. |
+| Durable restart/checkpoint execution | Official `pi-durable` exists as a separate Harness, not a coding-agent CLI facility | **Pending research; not adopted.** Prove a compatible CLI integration and state ownership first; no second engine. |
+| Independent tool-using Council seats | Native isolated Pi processes and tool/model selection exist | **Pending research; not ported.** Validate reliable terminal results and bounded seat orchestration on those primitives before replacing the existing text-only Council. |
+| Complete team presets, custom agent definitions and role-model profiles | Single-session model/thinking APIs, CLI model selection and official preset/subagent examples exist | **Pending research; not ported.** No complete native team-profile manager was established. Preserve current prompt presets and explicit per-call model selection. |
+| Automatic model-chain fallback | Native retries, `registerVirtualModel`, retry metadata and branch-persisted route state exist | **Pending research for policy; no new fallback enabled.** Determine the required chain, supported failure semantics and retry/cache behavior. Use Pi routing if later confirmed, not an imported fallback engine. |
+| Automatic Deepwork pointer recovery | Native lifecycle hooks, session history and custom entries exist | **Pending research; not ported.** No native Deepwork index recovery facility was established; retain the documented manual recovery procedure. |
+| Independent Validator and extra workflow skills | Native delegation and skill loading already exist | Reuse existing Fixer/Oracle checks and the Deepwork reassessment step. No new role or skill catalog is required by this scope; additional workflow proposals remain **pending research** for a concrete need. |
+| Advanced Smartfetch, path rescue and patch-recovery hooks | Pi owns file/search/edit tools; Sensei has a lean fetcher | **Pending research; not ported.** Establish exact native coverage and reproduce a missing behavior before adding wrappers or dependencies. |
+
+The already-reproduced task success-classification defect above remains an existing correctness issue, not a new feature deferred for lack of native infrastructure. Source/API assessments here do not establish live-provider, durable-restart or platform behavior. No optional runtime dependency, model change or autonomous scheduler is activated.
 
 ### Official evidence inspected
 
@@ -127,3 +150,4 @@ All references below are pinned to Pi v1.4.0, commit `4a080252f06caf63a525d7873c
 - [Durable Harness and background examples](https://github.com/earendil-works/pi/blob/v1.4.0/packages/durable/README.md#abort-and-subagents).
 - [Official preset example](https://github.com/earendil-works/pi/blob/v1.4.0/packages/coding-agent/examples/extensions/preset.ts), [virtual models](https://github.com/earendil-works/pi/blob/v1.4.0/packages/coding-agent/docs/virtual-models.md), [settings](https://github.com/earendil-works/pi/blob/v1.4.0/packages/coding-agent/docs/settings.md).
 - [Pi packages](https://github.com/earendil-works/pi/blob/v1.4.0/packages/coding-agent/docs/packages.md), [extension interfaces](https://github.com/earendil-works/pi/blob/v1.4.0/packages/coding-agent/src/core/extensions/types.ts).
+- [Native skills and command expansion](https://github.com/earendil-works/pi/blob/v1.4.0/packages/coding-agent/docs/skills.md), [optional question UI example](https://github.com/earendil-works/pi/blob/v1.4.0/packages/coding-agent/examples/extensions/question.ts), [optional questionnaire example](https://github.com/earendil-works/pi/blob/v1.4.0/packages/coding-agent/examples/extensions/questionnaire.ts).

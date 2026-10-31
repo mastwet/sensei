@@ -124,12 +124,21 @@ Extensions have no third-party imports (raw JSON-Schema params), which reduces d
 | `codemap` | Hierarchical `codemap.md` generation for unfamiliar repos, with `.sensei/codemap.json` change detection. Subagent fan-out goes through the `delegate` tool. |
 | `clonedeps` | Clone a dependency's source into an ignored local workspace so the agent can read library internals when docs aren't enough. |
 | `deepwork` | Optional Pi skill for large, risky work: usable end-to-end passes, a small session-ID-based resume index, project-owned documents and scoped verification. Invoke `/skill:deepwork`; no separate scheduler or guard runtime. |
+| `interview` | Pi conversation for requirements and specifications. Invoke `/skill:interview <topic>`; one decision per turn, explicit unknowns, then a specification for user confirmation. |
 | `verification-planning` | Plan a credible, project-specific evidence path before a non-trivial feature, fix, or refactor. |
 | `simplify` | Reduce complexity for clarity without changing behavior. |
 | `worktrees` | Manage git worktrees as isolated lanes for complex, risky, or parallel work. |
 | `loop-engineering` | Structured retries with explicit success criteria (Grill + Monitor). |
 | `reflect` | Review recent sessions for repeated patterns and propose reusable skills, commands, rules, or presets. |
 | `sensei-config` | Tune models, role prompts, presets, rules, skills, tool allowlists, and delegate behavior. |
+
+Interview uses normal Pi chat and session history. Answer in the next turn, say
+"skip" to leave an item open, or "finish" for a draft. The agent saves the
+specification in an agreed project document when requested; interview
+does not authorize implementation. Run it outside active `/work` or `/goal`
+continuation (`/work stop`, `/goal pause`). This skill adds no service or runtime
+state. See [adoption decisions](docs/ARCHITECTURE.md#product-decisions) for the
+excluded products and remaining research items.
 
 ## Quickstart
 
