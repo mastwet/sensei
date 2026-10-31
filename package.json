@@ -21,6 +21,7 @@
     "agent-template/",
     "install.sh",
     "start.ps1",
+    "docs/ARCHITECTURE.md",
     "README.md",
     "LICENSE"
   ],
@@ -33,10 +34,11 @@
     "tui"
   ],
   "scripts": {
+    "test": "node --test tests/host.test.mjs",
     "smoke": "node bin/sensei.mjs --version"
   },
   "dependencies": {
-    "@earendil-works/pi-coding-agent": "0.87.1",
+    "@earendil-works/pi-coding-agent": "1.4.0",
     "@ast-grep/cli": "0.45.3"
   },
   "engines": {

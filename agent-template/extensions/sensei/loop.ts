@@ -93,17 +93,17 @@ export default function loop(pi: any): void {
 		return jobs.filter((j) => j.nextRunAt <= now);
 	}
 
-	function fire(ctx: any, job: Job) {
+	function fire(job: Job) {
 		job.timesLeft = job.timesLeft === -1 ? -1 : job.timesLeft - 1;
 		job.nextRunAt = computeNext(job, Date.now());
-		ctx.sendUserMessage(`[loop ${job.id}] ${job.task}`, { deliverAs: "followUp" });
+		pi.sendUserMessage(`[loop ${job.id}] ${job.task}`, { deliverAs: "followUp" });
 	}
 
 	function sweep(ctx: any) {
 		const now = Date.now();
 		const due = dueJobs(now);
 		if (!due.length) return;
-		for (const job of due) fire(ctx, job);
+		for (const job of due) fire(job);
 		jobs = jobs.filter((j) => j.timesLeft !== 0);
 		persist(ctx);
 	}
@@ -134,8 +134,10 @@ export default function loop(pi: any): void {
 	// In headless mode timers never run; catch due jobs at the settle boundary.
 	pi.on("agent_before_settle", async (event: any, ctx: any) => {
 		if (ctx.mode === "tui") return undefined;
+		if (event.outcome !== "completed") return undefined;
 		const due = dueJobs(Date.now());
-		if (!due.length || !event.context?.canContinue) return undefined;
+		// Adding the scheduled message makes a completed assistant turn continuable.
+		if (!due.length) return undefined;
 		const entries = due.map((job: Job) => {
 			job.timesLeft = job.timesLeft === -1 ? -1 : job.timesLeft - 1;
 			job.nextRunAt = computeNext(job, Date.now());

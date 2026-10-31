@@ -2,7 +2,7 @@
 
 A stability-first, self-maintained coding agent. Built like `oh-my-opencode-slim` but the other way around: the host is someone else's maintained project, everything we own is a thin layer on top.
 
-- **Host**: pinned `@earendil-works/pi-coding-agent` (upstream `badlogic/pi-mono`, NOT senpi). Never forked, never patched. The payload sent to providers is exactly what upstream pi sends — no hook-layer mutation, no cache busting.
+- **Host**: pinned `@earendil-works/pi-coding-agent@1.4.0` (upstream [`earendil-works/pi`](https://github.com/earendil-works/pi), formerly `badlogic/pi-mono`). Never forked or patched. Pi owns provider requests; Sensei uses supported extension hooks for prompt sections and tool policies without rewriting provider payloads.
 - **Owned layer**: one agent dir seeded from `agent-template/` — settings, extensions, skills, prompts. Single config surface, a handful of knobs.
 - **Isolation**: runs with `PI_CODING_AGENT_DIR=~/.sensei`. Never touches `~/.pi`, `~/.senpi`, or your other agent installs. Coexists with them.
 
@@ -42,6 +42,8 @@ Note that the source bootstrap installs with `--ignore-scripts`, so `@ast-grep/c
 </details>
 
 ## Architecture
+
+The host is Pi **1.4.0**, the latest stable release checked on **2026-10-31**. See [Architecture and host upgrades](docs/ARCHITECTURE.md) for ownership boundaries, migration notes, and verification.
 
 ```
 agent-sensei repo
@@ -109,7 +111,9 @@ The wrapper resolves both dependencies by package name rather than by path. A lo
 | `/preset <name>` | Session-scoped system-prompt fragment from `~/.sensei/presets/*.md` or `<project>/.sensei/presets/*.md`. Appended, never replaces — tool guidance can't be clobbered. `SENSEI_PRESET` preselects. | senpi prompt-preset |
 | `banner` | TUI header: what this is on line 1, live run facts (host version, active model, project, agent dir) on line 2, command hints on line 3. `/banner` cycles sensei ↔ pi's own header. | — (sensei identity) |
 
-Everything else stays stock pi: tools `read/bash/edit/write/grep/find/ls` + `codemode` and `tool_search` enabled via `settings.json`. Extensions are dependency-free (raw JSON-Schema params, no third-party imports) so they never break on host upgrades.
+Everything else stays stock Pi: default tools `read/bash/edit/write`, plus `grep/find/ls`, `codemode`, and `tool_search` enabled with additive `+name` entries in `settings.json`. Pi owns MCP connections, OAuth, tool exposure, codemode sandboxing, sessions, and provider routing. On Windows, enable Pi's optional native PowerShell tool with `sensei --tools +powershell`.
+
+Extensions have no third-party imports (raw JSON-Schema params), which reduces dependency coupling. They still depend on Pi's extension API, so host upgrades must pass the real-host integration tests.
 
 ## Skills
 
@@ -150,7 +154,7 @@ sensei --version    # smoke check
 
 ## Maintenance model
 
-- **Upgrade host**: bump the one version in `package.json`, `npm install --ignore-scripts`, `npm run smoke`, run a real session. That's the whole host contract — no rebasing anyone's fork.
+- **Upgrade host**: pin a stable release in `package.json`, regenerate `package-lock.json` with `npm install --ignore-scripts`, then run `npm ci --ignore-scripts`, `npm test`, and `npm run smoke`. Test a real provider session before releasing. See [migration notes](docs/ARCHITECTURE.md#upgrading-from-pi-0871) for existing profiles.
 - **Add features**: write an extension in `agent-template/extensions/` (or a skill/prompt). Never patch the host. If a capability can't be an extension, that's a signal to reconsider the feature, not to fork.
 - **Re-seed**: `extensions/` and `skills/` re-sync on every launch (owned surfaces — upgrades propagate automatically); `settings.json`/`models.json`/prompts are yours and never clobbered. `SENSEI_AGENT_DIR=/path` overrides the dir. To reset: `rm -rf ~/.sensei`.
 - **Port backlog** (from oh-my-openagent, on demand only): pick features you actually use; each lands as an extension, one at a time.
