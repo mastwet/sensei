@@ -19,15 +19,21 @@ npm install -g sensei-agent
 sensei            # first run seeds ~/.sensei, then starts the TUI
 ```
 
-The command is `sensei`; the package is `sensei-agent`. The npm commands work in macOS/Linux terminals and Windows PowerShell.
+The command is `sensei`; the package is `sensei-agent`. Choose one package manager. These commands work in macOS/Linux terminals and Windows PowerShell.
 
-To upgrade an existing npm installation:
+Alternative global installation commands:
 
-```sh
-npm install -g sensei-agent@latest
-```
+| Package manager | Install | Upgrade |
+|---|---|---|
+| npm | `npm install -g sensei-agent` | `npm install -g sensei-agent@latest` |
+| [Bun](https://bun.sh/docs/pm/cli/add) | `bun add -g sensei-agent` | `bun add -g sensei-agent@latest` |
+| [pnpm](https://pnpm.io/cli/add) | `pnpm add -g sensei-agent` | `pnpm add -g sensei-agent@latest` |
 
-Requires Node >= 22.19. Auth is per sensei (`~/.sensei/auth.json`); run `sensei` once and log in, or set the provider env var (e.g. `OPENAI_API_KEY`).
+After installation, run `sensei` with any of these package managers. Ensure the package manager's global binary directory is on `PATH`.
+
+Node >= 22.19 must still be installed: the Sensei launcher uses Node even when Bun installs the package. Bun and pnpm commands follow their official global-install interfaces; end-to-end installation with those managers has not been verified.
+
+Auth is per sensei (`~/.sensei/auth.json`); run `sensei` once and log in, or set the provider env var (e.g. `OPENAI_API_KEY`).
 
 <details>
 <summary>Install from source (for hacking on sensei itself)</summary>
