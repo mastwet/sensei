@@ -1,6 +1,6 @@
 # Sensei architecture
 
-Sensei pins the official Pi **1.4.0** host and owns a thin configuration and extension layer. The release and npm `latest` tag were checked on **2026-10-31**; the release was published on 2026-10-21 UTC. Upstream: [earendil-works/pi](https://github.com/earendil-works/pi), [v1.4.0](https://github.com/earendil-works/pi/releases/tag/v1.4.0).
+Sensei pins the official Pi **1.5.0** host and owns a thin configuration and extension layer. The release and npm `latest` tag were checked on **2026-11-04**; the release was published on 2026-11-02 UTC. Upstream: [earendil-works/pi](https://github.com/earendil-works/pi), [v1.5.0](https://github.com/earendil-works/pi/releases/tag/v1.5.0).
 
 The authoritative project constraints are in [AGENTS.md](../AGENTS.md): Pi only, native infrastructure first, minimal owned machinery and selective upstream adoption. This document records the corresponding architecture and evidence.
 
@@ -19,7 +19,15 @@ The host stays an exact dependency pin with a committed npm lockfile. Forking Pi
 
 The launcher remains a process boundary, rather than embedding the SDK. This keeps the native CLI modes and lets delegated tasks reuse the same executable without maintaining a second runtime integration.
 
-## Pi 1.4 contracts used by Sensei
+## Upgrading from Pi 1.4.0 to 1.5.0
+
+The official [1.5.0 release notes](https://github.com/earendil-works/pi/releases/tag/v1.5.0) move tool-argument validation to `@earendil-works/pi-schema`. TypeBox constructs outside JSON Schema no longer apply, and validation error text changes. Sensei's owned tool schemas do not use those constructs; the native extension loader retains compatibility for imports from `@earendil-works/pi-ai`. No host patch or new Sensei subsystem is needed.
+
+Pi also changes its default OpenAI model to `gpt-6.1-sol` when no model is selected. Model selection and existing user configuration remain Pi-owned. The native capability assessments below remain historical evidence inspected at v1.4.0; this dependency upgrade does not adopt the pending products or expand those assessments.
+
+Verified on Windows on 2026-11-04 after installing the exact pin with `npm install --save-exact @earendil-works/pi-coding-agent@1.5.0 --ignore-scripts`: all 19 real-host offline integration tests passed, `npm run smoke` reported `1.5.0`, and `npm pack --dry-run` succeeded. No owned extension code changes were required. Live providers, MCP connectivity and interactive TUI rendering were not evaluated.
+
+## Pi contracts used by Sensei
 
 - `defaultTools` contains additive entries: `+grep`, `+find`, `+ls`, `+codemode`, `+tool_search`. Pi retains its default coding tools. Extension tools keep their normal activation behavior; this is not a global allowlist. PowerShell is an optional upstream tool, enabled on Windows with `--tools +powershell`.
 - MCP remains upstream-owned. Configure servers in `<agentDir>/mcp.json` or trusted project `.pi/mcp.json`; use Pi's `/mcp` and `sensei mcp` commands. Sensei does not add a second MCP manager.

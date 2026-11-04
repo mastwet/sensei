@@ -2,7 +2,7 @@
 
 A stability-first, self-maintained coding agent. Built like `oh-my-opencode-slim` but the other way around: the host is someone else's maintained project, everything we own is a thin layer on top.
 
-- **Host**: pinned `@earendil-works/pi-coding-agent@1.4.0` (upstream [`earendil-works/pi`](https://github.com/earendil-works/pi), formerly `badlogic/pi-mono`). Never forked or patched. Pi owns provider requests; Sensei uses supported extension hooks for prompt sections and tool policies without rewriting provider payloads.
+- **Host**: pinned `@earendil-works/pi-coding-agent@1.5.0` (upstream [`earendil-works/pi`](https://github.com/earendil-works/pi), formerly `badlogic/pi-mono`). Never forked or patched. Pi owns provider requests; Sensei uses supported extension hooks for prompt sections and tool policies without rewriting provider payloads.
 - **Owned layer**: one agent dir seeded from `agent-template/` — settings, extensions, skills, prompts. Single config surface, a handful of knobs.
 - **Isolation**: runs with `PI_CODING_AGENT_DIR=~/.sensei`. Never touches `~/.pi`, `~/.senpi`, or your other agent installs. Coexists with them.
 
@@ -12,12 +12,20 @@ Project policy: [AGENTS.md](AGENTS.md). Sensei builds exclusively on official Pi
 
 ## Install
 
+Published on npm as [sensei-agent](https://www.npmjs.com/package/sensei-agent). Version **0.1.0** includes the pinned Pi **1.5.0** host.
+
 ```sh
-npm install -g agent-sensei
+npm install -g sensei-agent
 sensei            # first run seeds ~/.sensei, then starts the TUI
 ```
 
-The command is `sensei`; the package is `agent-sensei` (the unscoped `sensei` name is taken on npm).
+The command is `sensei`; the package is `sensei-agent`. The npm commands work in macOS/Linux terminals and Windows PowerShell.
+
+To upgrade an existing npm installation:
+
+```sh
+npm install -g sensei-agent@latest
+```
 
 Requires Node >= 22.19. Auth is per sensei (`~/.sensei/auth.json`); run `sensei` once and log in, or set the provider env var (e.g. `OPENAI_API_KEY`).
 
@@ -45,10 +53,10 @@ Note that the source bootstrap installs with `--ignore-scripts`, so `@ast-grep/c
 
 ## Architecture
 
-The host is Pi **1.4.0**, the latest stable release checked on **2026-10-31**. See [Architecture and host upgrades](docs/ARCHITECTURE.md) for ownership boundaries, migration notes, and verification.
+The host is Pi **1.5.0**, the latest stable release checked on **2026-11-04**. See [Architecture and host upgrades](docs/ARCHITECTURE.md) for ownership boundaries, migration notes, and verification.
 
 ```
-agent-sensei repo
+sensei-agent repo
 ├── bin/sensei.mjs        # wrapper: seeds agent dir, execs pinned pi with PI_CODING_AGENT_DIR
 ├── install.sh            # POSIX source bootstrap: npm install --ignore-scripts && npm link
 ├── start.ps1             # Windows source bootstrap + launch (same steps, plus smoke check)
