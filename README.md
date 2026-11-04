@@ -12,7 +12,7 @@ Project policy: [AGENTS.md](AGENTS.md). Sensei builds exclusively on official Pi
 
 ## Install
 
-Published on npm as [sensei-agent](https://www.npmjs.com/package/sensei-agent). Version **0.1.0** includes the pinned Pi **1.5.0** host.
+Published on npm as [sensei-agent](https://www.npmjs.com/package/sensei-agent). Version **0.1.1** pins the Pi **1.5.0** host and fixes a TUI crash when a loop-guard notice is displayed.
 
 ```sh
 npm install -g sensei-agent
