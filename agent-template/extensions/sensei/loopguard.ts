@@ -430,13 +430,12 @@ export default function (pi: any): void {
     pendingRecoveryToolName = undefined;
   };
 
-  try {
-    pi.registerMessageRenderer?.(NOTICE_TYPE, (msg: any) => msg.content);
-    pi.registerMessageRenderer?.(ESCALATION_TYPE, (msg: any) => msg.content);
-    pi.registerMessageRenderer?.(RECOVERY_TYPE, (msg: any) => msg.content);
-  } catch {
-    // renderer optional — TUI falls back to generic display
-  }
+  // Pi 1.5.0 requires a registerMessageRenderer callback to return a pi-tui
+  // Component. The old callbacks returned msg.content (a string), which
+  // CustomMessageComponent added as a child and then crashed the TUI with
+  // "child.render is not a function" whenever loop guard emitted a notice.
+  // sensei extensions stay dependency-free (no pi-tui imports), so leave
+  // custom messages to the host's generic renderer.
 
   pi.on("session_start", () => reset());
   pi.on("session_shutdown", () => reset());

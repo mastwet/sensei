@@ -252,3 +252,14 @@ test("a saved background completion is delivered once and marked reported", (t) 
   const again = p.run([...sessionArgs, "Hello again"], "background");
   assert.ok(!again.includes("BACKGROUND_SENTINEL"), again);
 });
+
+test("loop guard leaves custom-message rendering to the Pi host", () => {
+  // Pi 1.5.0 requires registerMessageRenderer callbacks to return a pi-tui
+  // Component. loopguard used to return msg.content (a string); the host then
+  // added it as a child and crashed the TUI with "child.render is not a
+  // function" on every notice. sensei extensions stay dependency-free, so no
+  // renderer is registered and the host's generic rendering is used instead.
+  const source = readFileSync(join(root, "agent-template/extensions/sensei/loopguard.ts"), "utf8");
+  assert.doesNotMatch(source, /registerMessageRenderer[^\n]*=>\s*msg\.content/,
+    "a message renderer must return a Component, never raw msg.content");
+});
